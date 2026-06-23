@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-saveconfig"
+description = "Enables the saveconfig command without any pre-configured scope."
+commands.allow = ["saveconfig"]
+
+[[permission]]
+identifier = "deny-saveconfig"
+description = "Denies the saveconfig command without any pre-configured scope."
+commands.deny = ["saveconfig"]
