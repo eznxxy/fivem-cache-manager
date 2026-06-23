@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-serverselected"
+description = "Enables the serverselected command without any pre-configured scope."
+commands.allow = ["serverselected"]
+
+[[permission]]
+identifier = "deny-serverselected"
+description = "Denies the serverselected command without any pre-configured scope."
+commands.deny = ["serverselected"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-swapcache"
+description = "Enables the swapcache command without any pre-configured scope."
+commands.allow = ["swapcache"]
+
+[[permission]]
+identifier = "deny-swapcache"
+description = "Denies the swapcache command without any pre-configured scope."
+commands.deny = ["swapcache"]

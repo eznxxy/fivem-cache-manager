@@ -1,0 +1,12 @@
+[[permission]]
+identifier = "app-commands"
+description = "Enable all custom commands"
+commands.allow = [
+  "swapcache",
+  "loadconfig",
+  "saveconfig",
+  "getserverfolders",
+  "serverselected",
+  "openserver",
+  "check_prerequisites"
+]

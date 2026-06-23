@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FiveM Cache Manager — swap per-server cache automatically before joining FiveM servers." />
+    <title>FiveM Cache Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <!-- App Shell -->
+    <div id="app" class="app-shell">
+
+      <!-- WebView Placeholder (replaced at runtime by Tauri WebView) -->
+      <main id="webview-container" class="webview-area" aria-label="FiveM Server Browser">
+        <!-- In dev mode: shows placeholder; in production: Tauri renders the cfx.re WebView here -->
+        <div class="webview-placeholder">
+          <div class="placeholder-icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="30" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="4 4"/>
+              <path d="M20 32 L32 20 L44 32 L32 44 Z" fill="var(--color-accent)" opacity="0.3"/>
+              <circle cx="32" cy="32" r="6" fill="var(--color-accent)"/>
+            </svg>
+          </div>
+          <p class="placeholder-text">Loading server browser…</p>
+          <p class="placeholder-sub">Connecting to servers.fivem.net</p>
+        </div>
+      </main>
+
+      <!-- Action Bar — persistent bottom bar -->
+      <footer id="action-bar" class="action-bar" role="complementary" aria-label="Cache Manager Controls">
+
+        <!-- Status Section -->
+        <div class="bar-status" id="bar-status-section">
+          <div class="status-dot" id="status-dot" data-status="idle"></div>
+          <div class="status-text-group">
+            <span class="status-label" id="status-label">Idle</span>
+            <span class="status-sub" id="status-sub">Select a server from the browser above</span>
+          </div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="bar-spacer"></div>
+
+        <!-- Action Buttons -->
+        <div class="bar-actions" id="bar-actions">
+          <button
+            id="btn-join-no-swap"
+            class="btn btn-ghost"
+            disabled
+            aria-label="Join server without swapping cache"
+            title="Skip cache swap and join directly"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Join Without Swap
+          </button>
+
+          <button
+            id="btn-swap-join"
+            class="btn btn-primary"
+            disabled
+            aria-label="Swap cache and join server"
+            title="Move matching cache to FiveM data root, then join"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 4 4M14 6l-4 4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Swap &amp; Join
+          </button>
+
+          <!-- Settings Gear -->
+          <button
+            id="btn-settings"
+            class="btn btn-icon"
+            aria-label="Open settings"
+            title="Settings"
+          >
+            <svg id="gear-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14.55 11.175a1.35 1.35 0 00.27 1.485l.049.049a1.638 1.638 0 010 2.317 1.637 1.637 0 01-2.317 0l-.049-.049a1.35 1.35 0 00-1.485-.27 1.35 1.35 0 00-.818 1.237v.138a1.638 1.638 0 01-3.275 0v-.073a1.35 1.35 0 00-.884-1.237 1.35 1.35 0 00-1.485.27l-.049.048a1.637 1.637 0 01-2.317-2.316l.049-.049a1.35 1.35 0 00.27-1.485 1.35 1.35 0 00-1.237-.818H.938a1.638 1.638 0 010-3.276h.073a1.35 1.35 0 001.237-.883 1.35 1.35 0 00-.27-1.485l-.049-.049A1.638 1.638 0 014.246 2.9l.049.049a1.35 1.35 0 001.485.27h.065A1.35 1.35 0 006.663 1.98V1.84a1.638 1.638 0 013.276 0v.073a1.35 1.35 0 00.818 1.237 1.35 1.35 0 001.485-.27l.049-.049a1.638 1.638 0 012.317 2.317l-.049.049a1.35 1.35 0 00-.27 1.485v.065a1.35 1.35 0 001.237.818h.138a1.638 1.638 0 010 3.276h-.073a1.35 1.35 0 00-1.237.818v-.001z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </footer>
+
+      <!-- Settings Panel (overlay) -->
+      <aside id="settings-panel" class="settings-panel" aria-label="Settings" aria-hidden="true">
+        <div class="settings-header">
+          <h2 class="settings-title">Settings</h2>
+          <button id="btn-settings-close" class="btn btn-icon" aria-label="Close settings">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="settings-body">
+          <!-- FiveM Data Path -->
+          <section class="settings-section">
+            <h3 class="settings-section-title">FiveM Data Directory</h3>
+            <div class="input-row">
+              <input
+                type="text"
+                id="input-fivem-path"
+                class="text-input"
+                placeholder="FiveM\FiveM.app\data"
+                aria-label="FiveM data directory path"
+              />
+              <button id="btn-browse-path" class="btn btn-secondary" aria-label="Browse for FiveM data directory">
+                Browse
+              </button>
+            </div>
+            <p class="settings-hint" id="path-validation-msg"></p>
+          </section>
+
+          <!-- Toggles -->
+          <section class="settings-section">
+            <h3 class="settings-section-title">Behavior</h3>
+
+            <label class="toggle-row" for="toggle-auto-detect">
+              <div class="toggle-info">
+                <span class="toggle-label">Auto-detect server name</span>
+                <span class="toggle-desc">Extract server name from clicked card automatically</span>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="toggle-auto-detect" class="toggle-input" checked />
+                <span class="toggle-thumb" aria-hidden="true"></span>
+              </div>
+            </label>
+
+            <label class="toggle-row" for="toggle-restore-cache">
+              <div class="toggle-info">
+                <span class="toggle-label">Restore previous cache before swap</span>
+                <span class="toggle-desc">Move current root cache back to its server folder before swapping in the new one</span>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="toggle-restore-cache" class="toggle-input" checked />
+                <span class="toggle-thumb" aria-hidden="true"></span>
+              </div>
+            </label>
+          </section>
+
+          <!-- Detected Folders -->
+          <section class="settings-section">
+            <div class="section-row">
+              <h3 class="settings-section-title">Detected Server Folders</h3>
+              <button id="btn-refresh-folders" class="btn btn-ghost btn-sm" aria-label="Refresh server folder list">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7a6 6 0 1110.94-3.4M12 1v3.5H8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Refresh
+              </button>
+            </div>
+            <ul id="folder-list" class="folder-list" aria-label="Detected server cache folders">
+              <li class="folder-list-empty">No server folders detected</li>
+            </ul>
+          </section>
+
+          <!-- Save Button -->
+          <div class="settings-footer">
+            <button id="btn-save-settings" class="btn btn-primary" aria-label="Save settings">Save Settings</button>
+            <span class="save-status" id="save-status"></span>
+          </div>
+        </div>
+      </aside>
+
+    </div><!-- /#app -->
+  </body>
+</html>
