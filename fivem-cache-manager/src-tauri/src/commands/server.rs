@@ -3,48 +3,8 @@
 // Receives the server name + join URL from the content script via invoke(),
 // then notifies the injected action bar (content_script.js).
 
-use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
-/// Payload received from the WebView content script when a user clicks Join/Connect
-#[derive(Debug, Deserialize)]
-pub struct ServerSelectedPayload {
-    pub server_name: String,
-    pub join_url: String,
-}
-
-/// Payload emitted to the WebView so the injected action bar updates
-#[derive(Debug, Serialize, Clone)]
-pub struct ServerDetectedEvent {
-    #[serde(rename = "serverName")]
-    pub server_name: String,
-    #[serde(rename = "joinUrl")]
-    pub join_url: String,
-}
-
-/// Push server info to the injected action bar via webview.eval().
-/// `app.emit` alone is unreliable on external URL webviews — eval is the primary path.
-pub fn notify_action_bar(app: &AppHandle, server_name: &str, join_url: &str) {
-    let server_name = server_name.trim();
-    let join_url = join_url.trim();
-
-    if let Some(win) = app.get_webview_window("main") {
-        let sn = serde_json::to_string(server_name).unwrap_or_else(|_| "\"Unknown Server\"".into());
-        let ju = serde_json::to_string(join_url).unwrap_or_else(|_| "\"\"".into());
-        let script = format!("window.__fcmOnServerSelected?.({sn}, {ju});", sn = sn, ju = ju);
-        if let Err(e) = win.eval(script) {
-            println!("[CacheManager] action bar eval failed: {e}");
-        }
-    }
-
-    let event = ServerDetectedEvent {
-        server_name: server_name.to_string(),
-        join_url: join_url.to_string(),
-    };
-    if let Err(e) = app.emit_to("main", "server-detected", event) {
-        println!("[CacheManager] emit_to server-detected failed: {e}");
-    }
-}
 
 /// Fallback when Rust intercepts fivem:// navigation — extract server name from page DOM.
 pub fn notify_fallback_join(app: &AppHandle, join_url: &str) {
@@ -86,7 +46,7 @@ pub fn openserver(_app: AppHandle, url: String) -> Result<(), String> {
         std::process::Command::new("explorer")
             .arg(&url)
             .spawn()
-            .map_err(|e| format!("Gagal menjalankan explorer: {}", e))?;
+            .map_err(|e| format!("Failed to launch explorer: {}", e))?;
         Ok(())
     }
 
@@ -95,6 +55,6 @@ pub fn openserver(_app: AppHandle, url: String) -> Result<(), String> {
         use tauri_plugin_opener::OpenerExt;
         _app.opener()
             .open_url(&url, None::<&str>)
-            .map_err(|e| format!("Gagal membuka FiveM: {}", e))
+            .map_err(|e| format!("Failed to open FiveM: {}", e))
     }
 }

@@ -24,14 +24,14 @@ fn move_directory(from: &Path, to: &Path) -> Result<(), String> {
     // If target exists, delete it first to prevent merging/conflicts
     if to.exists() {
         std::fs::remove_dir_all(to)
-            .map_err(|e| format!("Gagal menghapus folder tujuan yang sudah ada ({}): {}", to.display(), e))?;
+            .map_err(|e| format!("Failed to delete existing target folder ({}): {}", to.display(), e))?;
     }
 
     // Ensure target's parent directory exists
     if let Some(parent) = to.parent() {
         if !parent.exists() {
             std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Gagal membuat folder induk ({}): {}", parent.display(), e))?;
+                .map_err(|e| format!("Failed to create parent folder ({}): {}", parent.display(), e))?;
         }
     }
 
@@ -39,12 +39,12 @@ fn move_directory(from: &Path, to: &Path) -> Result<(), String> {
     std::fs::rename(from, to).map_err(|e| {
         if e.kind() == std::io::ErrorKind::PermissionDenied {
             format!(
-                "Akses ditolak saat memindahkan {} ke {}. Coba jalankan aplikasi sebagai Administrator.",
+                "Access denied when moving {} to {}. Try running the application as Administrator.",
                 from.display(),
                 to.display()
             )
         } else {
-            format!("Gagal memindahkan {} ke {}: {}", from.display(), to.display(), e)
+            format!("Failed to move {} to {}: {}", from.display(), to.display(), e)
         }
     })
 }
@@ -56,30 +56,36 @@ pub fn getserverfolders(app: AppHandle) -> Result<Vec<String>, String> {
     let path = PathBuf::from(&config.fivem_data_path);
 
     if !path.exists() {
-        return Err(format!("Path data FiveM tidak ditemukan: {}", config.fivem_data_path));
+        return Err(format!("FiveM data path not found: {}", config.fivem_data_path));
     }
     if !path.is_dir() {
-        return Err(format!("Path data FiveM bukan merupakan direktori: {}", config.fivem_data_path));
+        return Err(format!("FiveM data path is not a directory: {}", config.fivem_data_path));
     }
 
     let mut folders = Vec::new();
     let entries = std::fs::read_dir(&path)
-        .map_err(|e| format!("Gagal membaca direktori data FiveM: {}", e))?;
+        .map_err(|e| format!("Failed to read FiveM data directory: {}", e))?;
 
     for entry in entries {
-        let entry = entry.map_err(|e| format!("Gagal membaca entri direktori: {}", e))?;
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
         let entry_path = entry.path();
         if entry_path.is_dir() {
-            let mut has_cache = false;
-            for cache_name in &["cache", "server-cache", "server-cache-priv"] {
-                if entry_path.join(cache_name).exists() {
-                    has_cache = true;
-                    break;
+            if let Some(name_os) = entry_path.file_name() {
+                let name = name_os.to_string_lossy().into_owned();
+                if name.to_lowercase() == "nui-storage" {
+                    continue;
                 }
-            }
-            if has_cache {
-                if let Some(name) = entry_path.file_name() {
-                    folders.push(name.to_string_lossy().into_owned());
+
+                let mut has_cache = false;
+                for cache_name in &["cache", "server-cache", "server-cache-priv"] {
+                    if entry_path.join(cache_name).exists() {
+                        has_cache = true;
+                        break;
+                    }
+                }
+
+                if has_cache || Some(name.clone()) == config.last_used_folder {
+                    folders.push(name);
                 }
             }
         }
@@ -101,7 +107,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
         return Ok(SwapResult {
             success: false,
             matched_folder: None,
-            message: format!("Folder data FiveM tidak ditemukan pada path: {}. Silakan ubah di Settings.", data_path_str),
+            message: format!("FiveM data folder not found at path: {}. Please change it in Settings.", data_path_str),
         });
     }
 
@@ -112,7 +118,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
             return Ok(SwapResult {
                 success: false,
                 matched_folder: None,
-                message: format!("Gagal memindai folder server: {}", e),
+                message: format!("Failed to scan server folders: {}", e),
             });
         }
     };
@@ -133,7 +139,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
                 return Ok(SwapResult {
                     success: true,
                     matched_folder: None,
-                    message: "Tidak ada folder cache yang cocok dan nama server tidak valid. Masuk tanpa swap.".to_string(),
+                    message: "No matching cache folder and invalid server name. Joining without swap.".to_string(),
                 });
             }
 
@@ -143,7 +149,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
                     return Ok(SwapResult {
                         success: false,
                         matched_folder: None,
-                        message: format!("Gagal membuat folder baru ({}): {}", safe_name, e),
+                        message: format!("Failed to create new folder ({}): {}", safe_name, e),
                     });
                 }
             }
@@ -165,7 +171,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
             return Ok(SwapResult {
                 success: true,
                 matched_folder: Some(matched),
-                message: "Cache untuk server ini sudah aktif (dilewati).".to_string(),
+                message: "Cache for this server is already active (skipped).".to_string(),
             });
         }
     }
@@ -193,7 +199,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
                     success: false,
                     matched_folder: None,
                     message: format!(
-                        "Gagal mengembalikan cache sebelumnya ({}): {}",
+                        "Failed to restore previous cache ({}): {}",
                         last_folder,
                         restore_errors.join("; ")
                     ),
@@ -224,7 +230,7 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
             success: false,
             matched_folder: Some(matched.clone()),
             message: format!(
-                "Gagal memindahkan cache baru ke root (berhasil sebagian={}): {}",
+                "Failed to move new cache to root (partial success={}): {}",
                 moved_any,
                 swap_errors.join("; ")
             ),
@@ -237,14 +243,14 @@ pub fn swapcache(app: AppHandle, server_name: String) -> Result<SwapResult, Stri
         return Ok(SwapResult {
             success: true, // swap itself succeeded
             matched_folder: Some(matched),
-            message: format!("Swap berhasil, tetapi gagal memperbarui file konfigurasi: {}", e),
+            message: format!("Swap successful, but failed to update configuration file: {}", e),
         });
     }
 
     let success_msg = if is_new {
-        format!("Dibuat & disiapkan folder baru: {}", matched)
+        format!("Created & prepared new folder: {}", matched)
     } else {
-        format!("Berhasil swap cache ke folder: {}", matched)
+        format!("Successfully swapped cache to folder: {}", matched)
     };
 
     Ok(SwapResult {

@@ -5,6 +5,12 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FavoriteServer {
+    pub name: String,
+    pub join_url: String,
+}
+
 /// Application configuration — persisted to app data dir as config.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -19,6 +25,10 @@ pub struct AppConfig {
 
     /// Name of the last-used server folder (for restore-previous logic)
     pub last_used_folder: Option<String>,
+
+    /// List of favorite servers
+    #[serde(default)]
+    pub favorite_servers: Vec<FavoriteServer>,
 }
 
 impl Default for AppConfig {
@@ -30,6 +40,7 @@ impl Default for AppConfig {
             auto_detect_server: true,
             restore_previous_cache: true,
             last_used_folder: None,
+            favorite_servers: Vec::new(),
         }
     }
 }

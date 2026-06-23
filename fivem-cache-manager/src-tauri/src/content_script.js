@@ -376,7 +376,39 @@
       background: #5d7bf5;
       flex-shrink: 0;
     }
-    .fcm-folder-empty { color: #4e5470 !important; font-style: italic; justify-content: center !important; }
+    .fcm-fav-list {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 4px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      background: #0d0f14;
+      padding: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #4e5470 transparent;
+    }
+    .fcm-fav-list li {
+      padding: 6px 8px;
+      font-size: 11px;
+      color: #e8eaf0;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border-radius: 6px;
+      background: #13161e;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .fcm-fav-name { font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fcm-fav-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .fcm-fav-btn {
+      background: #1f2435; border: 1px solid transparent; color: #8b91a8;
+      border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 500;
+      cursor: pointer; transition: all 120ms ease;
+    }
+    .fcm-fav-btn:hover { background: #2a3045; color: #e8eaf0; }
+    .fcm-fav-btn-join { color: #3ecf8e; background: rgba(62,207,142,0.1); border-color: rgba(62,207,142,0.2); }
+    .fcm-fav-btn-join:hover { background: rgba(62,207,142,0.2); color: #4ae09e; }
+    .fcm-fav-btn-remove { color: #f45b5b; background: rgba(244,91,91,0.1); border-color: rgba(244,91,91,0.2); }
+    .fcm-fav-btn-remove:hover { background: rgba(244,91,91,0.2); color: #ff6b6b; }
+    .fcm-folder-empty { color: #4e5470 !important; font-style: italic; justify-content: center !important; background: transparent !important; border-color: transparent !important; }
     .fcm-folder-empty::before { display: none !important; }
     .fcm-settings-footer {
       display: flex; align-items: center; gap: 12px;
@@ -391,9 +423,8 @@
       transition: opacity 200ms ease;
     }
     .fcm-save-status.fcm-visible { opacity: 1; }
-    /* Gear button in action bar */
-    #fcm-btn-settings {
-      margin-left: 4px;
+    /* Icon buttons in action bar */
+    #fcm-btn-settings, #fcm-btn-home, #fcm-btn-favorite {
       background: transparent;
       border: none;
       color: #8b91a8;
@@ -404,8 +435,41 @@
       align-items: center;
       transition: background 120ms ease, color 120ms ease, transform 300ms ease;
     }
-    #fcm-btn-settings:hover { background: #1f2435; color: #e8eaf0; }
+    #fcm-btn-home { margin-right: 12px; }
+    #fcm-btn-settings { margin-left: 4px; }
+    #fcm-btn-settings:hover, #fcm-btn-favorite:hover, #fcm-btn-home:hover { background: #1f2435; color: #e8eaf0; }
     #fcm-btn-settings.fcm-settings-active { color: #5d7bf5; transform: rotate(45deg); }
+    #fcm-btn-favorite { margin-left: 0; }
+    #fcm-btn-favorite.fcm-favorite-active { color: #ffca28; }
+    #fcm-btn-favorite.fcm-favorite-active svg { fill: #ffca28; }
+    /* ── Home Sidebar ── */
+    #fcm-sidebar-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
+      z-index: 2147483646;
+      opacity: 0; pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+    #fcm-sidebar-overlay.fcm-visible { opacity: 1; pointer-events: auto; }
+    #fcm-sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 320px; max-width: 85vw;
+      background: #13161e;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      z-index: 2147483647;
+      transform: translateX(-100%);
+      transition: transform 300ms cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column;
+      box-shadow: 16px 0 32px rgba(0,0,0,0.4);
+    }
+    #fcm-sidebar.fcm-sidebar-open { transform: translateX(0); }
+    .fcm-sidebar-header {
+      padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .fcm-sidebar-title { font-size: 14px; font-weight: 600; color: #e8eaf0; display: flex; align-items: center; gap: 8px; }
+    .fcm-sidebar-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
     /* Modal styles */
     .fcm-modal-overlay {
       position: fixed; inset: 0;
@@ -509,18 +573,25 @@
     bar.setAttribute('role', 'complementary');
     bar.setAttribute('aria-label', 'Cache Manager Controls');
     bar.innerHTML = `
+      <button type="button" id="fcm-btn-home" title="Home" aria-label="Open Home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
       <div class="fcm-status">
         <div class="fcm-dot" id="fcm-dot" data-status="idle"></div>
         <div class="fcm-text-group">
-          <span class="fcm-label" id="fcm-label">Pilih server dari daftar di atas</span>
+          <span class="fcm-label" id="fcm-label">Select a server from the list above</span>
           <span class="fcm-sub" id="fcm-sub"></span>
         </div>
-        <div class="fcm-prereqs" id="fcm-prereqs" title="Memuat status aplikasi...">
-          <div class="fcm-prereq-item" id="fcm-prereq-steam" title="Steam tidak berjalan!">
+        <div class="fcm-prereqs" id="fcm-prereqs" title="Loading app status...">
+          <div class="fcm-prereq-item" id="fcm-prereq-steam" title="Steam is not running!">
             <svg class="fcm-prereq-icon" viewBox="0 0 24 24"><path d="M12.002 0C5.377 0 .002 5.375.002 12c0 4.965 3.011 9.231 7.379 11.002l3.413-4.931c-1.899-.545-3.327-2.302-3.327-4.402 0-2.485 2.015-4.502 4.502-4.502s4.502 2.017 4.502 4.502-2.015 4.502-4.502 4.502c-.371 0-.727-.052-1.071-.144l-3.364 4.86c2.096.721 4.382.724 6.477.017C19.986 21.037 24 16.98 24 12c0-6.625-5.373-12-11.998-12zm-3.834 16.593c-.927 0-1.677-.751-1.677-1.678 0-.926.75-1.676 1.677-1.676.925 0 1.676.75 1.676 1.676 0 .927-.751 1.678-1.676 1.678zm10.334-2.925c-.926 0-1.676-.75-1.676-1.676s.75-1.678 1.676-1.678 1.677.752 1.677 1.678-.751 1.676-1.677 1.676z"/></svg>
             Steam
           </div>
-          <div class="fcm-prereq-item" id="fcm-prereq-discord" title="Discord tidak berjalan!">
+          <div class="fcm-prereq-item" id="fcm-prereq-discord" title="Discord is not running!">
             <svg class="fcm-prereq-icon" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
             Discord
           </div>
@@ -532,6 +603,11 @@
         </button>
         <button type="button" class="fcm-btn fcm-btn-primary fcm-hidden" id="fcm-btn-swap-join" disabled>
           Swap &amp; Join
+        </button>
+        <button type="button" id="fcm-btn-favorite" class="fcm-hidden" title="Favorite" aria-label="Toggle Favorite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
         </button>
         <button type="button" id="fcm-btn-settings" title="Settings" aria-label="Open settings">
           <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -548,28 +624,55 @@
         <div class="fcm-modal">
           <div class="fcm-modal-header">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            Peringatan Steam
+            Steam Warning
           </div>
           <div class="fcm-modal-body">
-            Aplikasi Steam terdeteksi belum berjalan. FiveM sangat membutuhkan Steam untuk proses autentikasi. Jika Anda melanjutkannya, Anda mungkin gagal terhubung ke server.
+            Steam is not running. FiveM requires Steam for authentication. If you continue, you might fail to connect to the server.
           </div>
           <div class="fcm-modal-footer">
-            <button class="fcm-btn fcm-btn-secondary" id="fcm-modal-btn-cancel">Batal</button>
-            <button class="fcm-btn fcm-btn-primary" id="fcm-modal-btn-continue" style="background:#f45b5b !important;border-color:#f45b5b !important;">Tetap Join</button>
+            <button class="fcm-btn fcm-btn-secondary" id="fcm-modal-btn-cancel">Cancel</button>
+            <button class="fcm-btn fcm-btn-primary" id="fcm-modal-btn-continue" style="background:#f45b5b !important;border-color:#f45b5b !important;">Join Anyway</button>
           </div>
         </div>
       </div>
     `;
     
+    // Inject Sidebar HTML
+    const sidebarHtml = `
+      <div id="fcm-sidebar-overlay"></div>
+      <aside id="fcm-sidebar" aria-label="Cache Manager Home">
+        <div class="fcm-sidebar-header">
+          <span class="fcm-sidebar-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            FiveM Cache Manager
+          </span>
+          <button type="button" class="fcm-settings-close" id="fcm-sidebar-close" title="Close">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="fcm-sidebar-body">
+          <section>
+            <div class="fcm-section-title" style="font-size:12px;margin-bottom:12px;">Favorite Servers</div>
+            <ul class="fcm-fav-list" id="fcm-fav-list">
+              <li class="fcm-folder-empty">Loading...</li>
+            </ul>
+          </section>
+        </div>
+      </aside>
+    `;
+
     document.body.appendChild(bar);
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.insertAdjacentHTML('beforeend', sidebarHtml);
 
     dom = {
       dot: bar.querySelector('#fcm-dot'),
       label: bar.querySelector('#fcm-label'),
       sub: bar.querySelector('#fcm-sub'),
+      btnHome: bar.querySelector('#fcm-btn-home'),
       btnJoinNoSwap: bar.querySelector('#fcm-btn-join-no-swap'),
       btnSwapJoin: bar.querySelector('#fcm-btn-swap-join'),
+      btnFavorite: bar.querySelector('#fcm-btn-favorite'),
       btnSettings: bar.querySelector('#fcm-btn-settings'),
       prereqSteam: bar.querySelector('#fcm-prereq-steam'),
       prereqDiscord: bar.querySelector('#fcm-prereq-discord'),
@@ -579,12 +682,15 @@
       modalBtnContinue: document.getElementById('fcm-modal-btn-continue'),
     };
 
-    dom.btnSwapJoin.addEventListener('click', () => checkSteamBeforeJoin(handleSwapJoin));
-    dom.btnJoinNoSwap.addEventListener('click', () => checkSteamBeforeJoin(handleJoinNoSwap));
+    dom.btnSwapJoin.addEventListener('click', () => checkPrerequisitesBeforeJoin(handleSwapJoin));
+    dom.btnJoinNoSwap.addEventListener('click', () => checkPrerequisitesBeforeJoin(handleJoinNoSwap));
+    dom.btnFavorite.addEventListener('click', toggleFavorite);
     dom.btnSettings.addEventListener('click', toggleSettings);
+    dom.btnHome.addEventListener('click', toggleSidebar);
 
     setBarStatus('idle');
     injectSettingsPanel();
+    initSidebar();
     console.log('[CacheManager] Action bar injected');
   }
 
@@ -599,15 +705,15 @@
     state.status = status;
     const { label, sub, isError = false } = opts;
 
-    const defaults = {
-      idle:     { label: 'Pilih server dari daftar di atas', sub: '' },
-      detected: { label: '', sub: '' },
-      swapping: { label: 'Sedang memindahkan cache...', sub: 'Mohon tunggu' },
-      done:     { label: '✓ Cache siap — FiveM sedang dibuka', sub: '' },
+    const STATUS_MESSAGES = {
+      idle:     { label: 'Select a server from the list above', sub: '' },
+      detected: { label: 'Server detected', sub: '' },
+      swapping: { label: 'Swapping cache...', sub: 'Please wait, moving files...' },
+      done:     { label: '✓ Cache ready', sub: 'FiveM is launching...' },
       error:    { label: 'Error', sub: '' },
     };
 
-    const msg = defaults[status] ?? defaults.idle;
+    const msg = STATUS_MESSAGES[status] ?? STATUS_MESSAGES.idle;
 
     dom.dot.dataset.status = status;
     dom.label.textContent = label ?? msg.label;
@@ -617,11 +723,25 @@
     const hasServer = !!state.joinUrl;
     const isSwapping = status === 'swapping';
 
-    dom.btnSwapJoin.classList.toggle('fcm-hidden', status === 'idle');
-    dom.btnJoinNoSwap.classList.toggle('fcm-hidden', !hasServer || status === 'idle');
+    if (isSwapping) {
+      dom.btnJoinNoSwap.classList.add('fcm-hidden');
+      dom.btnSwapJoin.classList.add('fcm-hidden');
+      dom.btnFavorite?.classList.add('fcm-hidden');
+    } else if (hasServer) {
+      dom.btnJoinNoSwap.classList.remove('fcm-hidden');
+      dom.btnSwapJoin.classList.remove('fcm-hidden');
+      dom.btnFavorite?.classList.remove('fcm-hidden');
+      dom.btnJoinNoSwap.disabled = false;
+      dom.btnSwapJoin.disabled = false;
+    } else {
+      dom.btnJoinNoSwap.classList.add('fcm-hidden');
+      dom.btnSwapJoin.classList.add('fcm-hidden');
+      dom.btnFavorite?.classList.add('fcm-hidden');
+      dom.btnJoinNoSwap.disabled = true;
+      dom.btnSwapJoin.disabled = true;
+    }
 
-    dom.btnSwapJoin.disabled = !hasServer || isSwapping;
-    dom.btnJoinNoSwap.disabled = !hasServer || isSwapping;
+    updateFavoriteButtonState();
   }
 
   function isGenericServerName(text) {
@@ -716,11 +836,11 @@
 
     const displayUrl = state.joinUrl
       ? state.joinUrl.replace('fivem://connect/', '')
-      : 'URL tidak tersedia';
+      : 'URL not available';
 
     setBarStatus('detected', {
-      label: `Ditemukan: ${state.serverName}`,
-      sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL tidak ditemukan',
+      label: `Detected: ${state.serverName}`,
+      sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL not found',
       isError: !state.joinUrl,
     });
 
@@ -887,8 +1007,10 @@
           auto_detect_server: cfg.auto_detect_server ?? true,
           restore_previous_cache: cfg.restore_previous_cache ?? true,
           last_used_folder: cfg.last_used_folder ?? null,
+          favorite_servers: cfg.favorite_servers || [],
         };
         loadConfigToUI();
+        renderFavoriteList();
       }
     } catch (e) {
       console.warn('[CacheManager] loadConfig failed:', e);
@@ -902,7 +1024,7 @@
       settingsDom.pathHint.textContent = '';
       settingsDom.pathHint.className = 'fcm-hint';
     } else {
-      settingsDom.pathHint.textContent = 'Path akan divalidasi saat disimpan';
+      settingsDom.pathHint.textContent = 'Path will be validated on save';
       settingsDom.pathHint.className = 'fcm-hint';
     }
   }
@@ -911,7 +1033,7 @@
     try {
       const openDialog = window.__TAURI__?.dialog?.open;
       if (openDialog) {
-        const selected = await openDialog({ directory: true, title: 'Pilih folder data FiveM' });
+        const selected = await openDialog({ directory: true, title: 'Select FiveM data folder' });
         if (selected && settingsDom.pathInput) {
           settingsDom.pathInput.value = selected;
           validatePath();
@@ -942,11 +1064,11 @@
     try {
       await tauriInvoke('saveconfig', { config: settingsState.config });
       if (settingsDom.pathHint) {
-        settingsDom.pathHint.textContent = '✓ Path tersimpan';
+        settingsDom.pathHint.textContent = '✓ Path saved';
         settingsDom.pathHint.className = 'fcm-hint ok';
       }
       if (settingsDom.saveStatus) {
-        settingsDom.saveStatus.textContent = '✓ Tersimpan';
+        settingsDom.saveStatus.textContent = '✓ Saved';
         settingsDom.saveStatus.classList.add('fcm-visible');
         setTimeout(() => settingsDom.saveStatus.classList.remove('fcm-visible'), 2500);
       }
@@ -963,19 +1085,23 @@
   async function refreshFolderList() {
     if (!settingsDom.folderList) return;
     settingsDom.refreshBtn && (settingsDom.refreshBtn.disabled = true);
-    settingsDom.folderList.innerHTML = '<li class="fcm-folder-empty">Memuat...</li>';
+    settingsDom.folderList.innerHTML = '<li class="fcm-folder-empty">Loading...</li>';
     try {
       const folders = await tauriInvoke('getserverfolders');
       settingsDom.folderList.innerHTML = '';
       if (!folders || folders.length === 0) {
         const li = document.createElement('li');
         li.className = 'fcm-folder-empty';
-        li.textContent = 'Tidak ada folder server terdeteksi';
+        li.textContent = 'No server folders detected';
         settingsDom.folderList.appendChild(li);
       } else {
         folders.forEach(name => {
           const li = document.createElement('li');
-          li.textContent = name;
+          if (settingsState.config.last_used_folder && name === settingsState.config.last_used_folder) {
+            li.innerHTML = `${name} <span style="color:#6bd37e;font-size:10px;font-weight:600;margin-left:8px;">(Active)</span>`;
+          } else {
+            li.textContent = name;
+          }
           settingsDom.folderList.appendChild(li);
         });
       }
@@ -983,6 +1109,153 @@
       settingsDom.folderList.innerHTML = `<li class="fcm-folder-empty">Error: ${e}</li>`;
     } finally {
       settingsDom.refreshBtn && (settingsDom.refreshBtn.disabled = false);
+    }
+  }
+
+  // ── Home Sidebar Logic ──
+  
+  let sidebarDom = {};
+  let sidebarOpen = false;
+
+  function initSidebar() {
+    sidebarDom = {
+      sidebar: document.getElementById('fcm-sidebar'),
+      overlay: document.getElementById('fcm-sidebar-overlay'),
+      closeBtn: document.getElementById('fcm-sidebar-close'),
+      favList: document.getElementById('fcm-fav-list'),
+    };
+
+    if (sidebarDom.closeBtn) {
+      sidebarDom.closeBtn.addEventListener('click', closeSidebar);
+    }
+    if (sidebarDom.overlay) {
+      sidebarDom.overlay.addEventListener('click', closeSidebar);
+    }
+  }
+
+  function openSidebar() {
+    sidebarOpen = true;
+    sidebarDom.sidebar?.classList.add('fcm-sidebar-open');
+    sidebarDom.overlay?.classList.add('fcm-visible');
+    renderFavoriteList();
+  }
+
+  function closeSidebar() {
+    sidebarOpen = false;
+    sidebarDom.sidebar?.classList.remove('fcm-sidebar-open');
+    sidebarDom.overlay?.classList.remove('fcm-visible');
+  }
+
+  function toggleSidebar() {
+    if (sidebarOpen) closeSidebar();
+    else openSidebar();
+  }
+
+  // ── Favorite Servers Logic ──
+
+  function renderFavoriteList() {
+    if (!sidebarDom.favList) return;
+    const favs = settingsState.config.favorite_servers || [];
+    
+    sidebarDom.favList.innerHTML = '';
+    if (favs.length === 0) {
+      sidebarDom.favList.innerHTML = '<li class="fcm-folder-empty">No favorite servers yet</li>';
+      return;
+    }
+
+    favs.forEach(fav => {
+      const li = document.createElement('li');
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'fcm-fav-name';
+      nameSpan.textContent = fav.name;
+      nameSpan.title = fav.name;
+      
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'fcm-fav-actions';
+      
+      const btnJoin = document.createElement('button');
+      btnJoin.className = 'fcm-fav-btn fcm-fav-btn-join';
+      btnJoin.textContent = '▶ Join';
+      btnJoin.onclick = () => joinFavorite(fav.name, fav.join_url);
+      
+      const btnRemove = document.createElement('button');
+      btnRemove.className = 'fcm-fav-btn fcm-fav-btn-remove';
+      btnRemove.textContent = '❌';
+      btnRemove.onclick = () => removeFavorite(fav.join_url);
+      
+      actionsDiv.appendChild(btnJoin);
+      actionsDiv.appendChild(btnRemove);
+      
+      li.appendChild(nameSpan);
+      li.appendChild(actionsDiv);
+      
+      sidebarDom.favList.appendChild(li);
+    });
+    updateFavoriteButtonState();
+  }
+
+  async function toggleFavorite() {
+    if (!state.joinUrl || !state.serverName) return;
+    
+    const favs = settingsState.config.favorite_servers || [];
+    const idx = favs.findIndex(f => f.join_url === state.joinUrl);
+    
+    if (idx >= 0) {
+      // Remove from favorites
+      favs.splice(idx, 1);
+    } else {
+      // Add to favorites
+      favs.push({
+        name: state.serverName,
+        join_url: state.joinUrl
+      });
+    }
+    
+    settingsState.config.favorite_servers = favs;
+    renderFavoriteList();
+    
+    try {
+      await tauriInvoke('saveconfig', { config: settingsState.config });
+    } catch(e) {
+      console.warn('[CacheManager] toggleFavorite save failed:', e);
+    }
+  }
+
+  async function removeFavorite(joinUrl) {
+    const favs = settingsState.config.favorite_servers || [];
+    settingsState.config.favorite_servers = favs.filter(f => f.join_url !== joinUrl);
+    renderFavoriteList();
+    try {
+      await tauriInvoke('saveconfig', { config: settingsState.config });
+    } catch(e) {}
+  }
+
+  function joinFavorite(name, joinUrl) {
+    state.serverName = name;
+    state.joinUrl = joinUrl;
+    closeSidebar();
+    closeSettings();
+    checkPrerequisitesBeforeJoin(handleSwapJoin);
+  }
+
+  function updateFavoriteButtonState() {
+    if (!dom.btnFavorite) return;
+    if (!state.joinUrl) {
+      dom.btnFavorite.classList.add('fcm-hidden');
+      return;
+    }
+    dom.btnFavorite.classList.remove('fcm-hidden');
+    
+    const favs = settingsState.config.favorite_servers || [];
+    const isFav = favs.some(f => f.join_url === state.joinUrl);
+    
+    if (isFav) {
+      dom.btnFavorite.classList.add('fcm-favorite-active');
+      dom.btnFavorite.setAttribute('aria-label', 'Remove from Favorites');
+    } else {
+      dom.btnFavorite.classList.remove('fcm-favorite-active');
+      dom.btnFavorite.setAttribute('aria-label', 'Add to Favorites');
     }
   }
 
@@ -1001,12 +1274,12 @@
       if (result?.success) {
         state.matchedFolder = result.matched_folder;
         const folderInfo = result.matched_folder
-          ? `folder: ${result.matched_folder}`
-          : 'tidak ada folder yang cocok';
+          ? `Matched: ${result.matched_folder}`
+          : 'no matching folder found';
         setBarStatus('done', { sub: folderInfo });
       } else {
         setBarStatus('error', {
-          sub: result?.message || 'Swap gagal',
+          sub: result?.message || 'Swap failed',
           isError: true,
         });
       }
@@ -1021,7 +1294,7 @@
   async function handleJoinNoSwap() {
     if (!state.joinUrl) return;
     const confirmed = window.confirm(
-      `Join tanpa swap cache?\n\n${state.serverName ?? 'Unknown server'}`
+      `Join without cache swap?\n\n${state.serverName ?? 'Unknown server'}`
     );
     if (!confirmed) return;
     await openUrl(state.joinUrl);
@@ -1263,22 +1536,22 @@
       const status = await tauriInvoke('check_prerequisites');
       if (status) {
         latestPrereqs = status;
-        dom.prereqsContainer.title = 'Status aplikasi pendukung';
+        dom.prereqsContainer.title = 'Support app status';
         
         if (status.steam) {
           dom.prereqSteam.classList.add('fcm-prereq-ok');
-          dom.prereqSteam.title = 'Steam sedang berjalan';
+          dom.prereqSteam.title = 'Steam is running';
         } else {
-          dom.prereqSteam.classList.remove('fcm-prereq-ok');
-          dom.prereqSteam.title = 'Steam tidak berjalan! FiveM mungkin membutuhkan Steam.';
+          dom.prereqSteam.className = 'fcm-prereq-item';
+          dom.prereqSteam.title = 'Steam is not running! FiveM might require Steam.';
         }
 
         if (status.discord) {
           dom.prereqDiscord.classList.add('fcm-prereq-ok');
-          dom.prereqDiscord.title = 'Discord sedang berjalan';
+          dom.prereqDiscord.title = 'Discord is running';
         } else {
-          dom.prereqDiscord.classList.remove('fcm-prereq-ok');
-          dom.prereqDiscord.title = 'Discord tidak berjalan! FiveM RPC membutuhkan Discord.';
+          dom.prereqDiscord.className = 'fcm-prereq-item';
+          dom.prereqDiscord.title = 'Discord is not running! FiveM RPC requires Discord.';
         }
       }
     } catch (e) {
@@ -1289,11 +1562,36 @@
   // ── Steam Warning Modal ──
   let pendingJoinAction = null;
 
-  function checkSteamBeforeJoin(joinAction) {
-    if (latestPrereqs.steam) {
+  function checkPrerequisitesBeforeJoin(joinAction) {
+    if (latestPrereqs.steam && latestPrereqs.discord) {
       joinAction();
     } else {
       pendingJoinAction = joinAction;
+      
+      const modalHeader = dom.modalOverlay?.querySelector('.fcm-modal-header');
+      const modalBody = dom.modalOverlay?.querySelector('.fcm-modal-body');
+      
+      if (modalHeader && modalBody) {
+        let missing = [];
+        if (!latestPrereqs.steam) missing.push('Steam');
+        if (!latestPrereqs.discord) missing.push('Discord');
+        
+        modalHeader.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          Prerequisite Warning
+        `;
+        
+        let msg = `The following applications are not running: <strong>${missing.join(' and ')}</strong>.<br><br>`;
+        if (!latestPrereqs.steam) {
+          msg += `FiveM strictly requires Steam for authentication. You might fail to connect to the server.<br><br>`;
+        }
+        if (!latestPrereqs.discord) {
+          msg += `Some servers might require Discord Rich Presence for allowlisting.`;
+        }
+        
+        modalBody.innerHTML = msg;
+      }
+      
       dom.modalOverlay?.classList.add('fcm-visible');
     }
   }
