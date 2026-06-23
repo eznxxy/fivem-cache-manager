@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/assets/logo.png" width="120" alt="Logo" />
+  <img src="src/assets/logo.svg" width="120" alt="Logo" />
   <h1>FiveM Cache Manager</h1>
   <p>
     <strong>A lightweight desktop app to seamlessly manage and swap your FiveM server caches.</strong>
