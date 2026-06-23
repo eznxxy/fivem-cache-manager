@@ -378,38 +378,41 @@
     }
     .fcm-fav-list {
       list-style: none;
-      display: flex; flex-direction: column; gap: 4px;
+      display: flex; flex-direction: column; gap: 10px;
       overflow-y: auto;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      background: #0d0f14;
-      padding: 8px;
       scrollbar-width: thin;
       scrollbar-color: #4e5470 transparent;
+      padding-top: 4px;
     }
     .fcm-fav-list li {
-      padding: 6px 8px;
-      font-size: 11px;
+      padding: 10px 12px;
+      font-size: 13px;
       color: #e8eaf0;
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      border-radius: 6px;
+      border-radius: 10px;
       background: #13161e;
-      border: 1px solid rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
     }
-    .fcm-fav-name { font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fcm-fav-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .fcm-fav-list li:not(.fcm-folder-empty):hover {
+      background: #1f2435;
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .fcm-fav-name { font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fcm-fav-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .fcm-fav-btn {
-      background: #1f2435; border: 1px solid transparent; color: #8b91a8;
-      border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 500;
-      cursor: pointer; transition: all 120ms ease;
+      border: 1px solid transparent; color: #8b91a8;
+      border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 150ms ease; display: inline-flex; align-items: center; justify-content: center;
     }
-    .fcm-fav-btn:hover { background: #2a3045; color: #e8eaf0; }
     .fcm-fav-btn-join { color: #3ecf8e; background: rgba(62,207,142,0.1); border-color: rgba(62,207,142,0.2); }
-    .fcm-fav-btn-join:hover { background: rgba(62,207,142,0.2); color: #4ae09e; }
-    .fcm-fav-btn-remove { color: #f45b5b; background: rgba(244,91,91,0.1); border-color: rgba(244,91,91,0.2); }
-    .fcm-fav-btn-remove:hover { background: rgba(244,91,91,0.2); color: #ff6b6b; }
-    .fcm-folder-empty { color: #4e5470 !important; font-style: italic; justify-content: center !important; background: transparent !important; border-color: transparent !important; }
-    .fcm-folder-empty::before { display: none !important; }
+    .fcm-fav-btn-join:hover { background: rgba(62,207,142,0.25); color: #3ecf8e; border-color: rgba(62,207,142,0.4); box-shadow: 0 0 10px rgba(62,207,142,0.2); }
+    .fcm-fav-btn-remove { padding: 6px; width: 28px; height: 28px; color: #f45b5b; background: rgba(244,91,91,0.1); border-color: rgba(244,91,91,0.2); }
+    .fcm-fav-btn-remove:hover { background: rgba(244,91,91,0.25); color: #f45b5b; border-color: rgba(244,91,91,0.4); box-shadow: 0 0 10px rgba(244,91,91,0.2); }
+    .fcm-folder-empty { color: #8b91a8 !important; font-style: normal; font-weight: 500; font-size: 13px !important; justify-content: center !important; background: transparent !important; border-color: transparent !important; }
+    .fcm-folder-empty:hover { transform: none !important; box-shadow: none !important; background: transparent !important; border-color: transparent !important; }
     .fcm-settings-footer {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 20px;
@@ -445,31 +448,31 @@
     /* ── Home Sidebar ── */
     #fcm-sidebar-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(2px);
+      background: rgba(13,15,20,0.7);
+      backdrop-filter: blur(4px);
       z-index: 2147483646;
       opacity: 0; pointer-events: none;
-      transition: opacity 200ms ease;
+      transition: opacity 250ms ease;
     }
     #fcm-sidebar-overlay.fcm-visible { opacity: 1; pointer-events: auto; }
     #fcm-sidebar {
       position: fixed; top: 0; left: 0; bottom: 0;
       width: 320px; max-width: 85vw;
-      background: #13161e;
+      background: #1a1e2a;
       border-right: 1px solid rgba(255,255,255,0.07);
       z-index: 2147483647;
       transform: translateX(-100%);
-      transition: transform 300ms cubic-bezier(0.4,0,0.2,1);
+      transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
       display: flex; flex-direction: column;
-      box-shadow: 16px 0 32px rgba(0,0,0,0.4);
+      box-shadow: 16px 0 40px rgba(0,0,0,0.5);
     }
     #fcm-sidebar.fcm-sidebar-open { transform: translateX(0); }
     .fcm-sidebar-header {
-      padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);
       display: flex; align-items: center; justify-content: space-between;
     }
-    .fcm-sidebar-title { font-size: 14px; font-weight: 600; color: #e8eaf0; display: flex; align-items: center; gap: 8px; }
-    .fcm-sidebar-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+    .fcm-sidebar-title { font-size: 15px; font-weight: 700; color: #e8eaf0; display: flex; align-items: center; gap: 10px; }
+    .fcm-sidebar-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
     /* Modal styles */
     .fcm-modal-overlay {
       position: fixed; inset: 0;
@@ -588,7 +591,7 @@
         </div>
         <div class="fcm-prereqs" id="fcm-prereqs" title="Loading app status...">
           <div class="fcm-prereq-item" id="fcm-prereq-steam" title="Steam is not running!">
-            <svg class="fcm-prereq-icon" viewBox="0 0 24 24"><path d="M12.002 0C5.377 0 .002 5.375.002 12c0 4.965 3.011 9.231 7.379 11.002l3.413-4.931c-1.899-.545-3.327-2.302-3.327-4.402 0-2.485 2.015-4.502 4.502-4.502s4.502 2.017 4.502 4.502-2.015 4.502-4.502 4.502c-.371 0-.727-.052-1.071-.144l-3.364 4.86c2.096.721 4.382.724 6.477.017C19.986 21.037 24 16.98 24 12c0-6.625-5.373-12-11.998-12zm-3.834 16.593c-.927 0-1.677-.751-1.677-1.678 0-.926.75-1.676 1.677-1.676.925 0 1.676.75 1.676 1.676 0 .927-.751 1.678-1.676 1.678zm10.334-2.925c-.926 0-1.676-.75-1.676-1.676s.75-1.678 1.676-1.678 1.677.752 1.677 1.678-.751 1.676-1.677 1.676z"/></svg>
+            <svg class="fcm-prereq-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M.329 10.333A8.01 8.01 0 0 0 7.99 16C12.414 16 16 12.418 16 8s-3.586-8-8.009-8A8.006 8.006 0 0 0 0 7.468l.003.006 4.304 1.769A2.2 2.2 0 0 1 5.62 8.88l1.96-2.844-.001-.04a3.046 3.046 0 0 1 3.042-3.043 3.046 3.046 0 0 1 3.042 3.043 3.047 3.047 0 0 1-3.111 3.044l-2.804 2a2.223 2.223 0 0 1-3.075 2.11 2.22 2.22 0 0 1-1.312-1.568L.33 10.333Z"/><path d="M4.868 12.683a1.715 1.715 0 0 0 1.318-3.165 1.7 1.7 0 0 0-1.263-.02l1.023.424a1.261 1.261 0 1 1-.97 2.33l-.99-.41a1.7 1.7 0 0 0 .882.84Zm3.726-6.687a2.03 2.03 0 0 0 2.027 2.029 2.03 2.03 0 0 0 2.027-2.029 2.03 2.03 0 0 0-2.027-2.027 2.03 2.03 0 0 0-2.027 2.027m2.03-1.527a1.524 1.524 0 1 1-.002 3.048 1.524 1.524 0 0 1 .002-3.048"/></svg>
             Steam
           </div>
           <div class="fcm-prereq-item" id="fcm-prereq-discord" title="Discord is not running!">
@@ -643,16 +646,16 @@
       <aside id="fcm-sidebar" aria-label="Cache Manager Home">
         <div class="fcm-sidebar-header">
           <span class="fcm-sidebar-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEhElEQVR42u1WTWhcVRQ+57w3+ZlmZpLmh1SjxFIqsbXiprjTXQtKwZUVBVGL6KZFcasbcSWoG3WjFAtiwI2UbsSNIIg/4EKSGk2gNBKTJjYzb2bSTGbevcdzzn0zY1pFA6UK5k3InXn353w/55z3YviXr3gXwC6A/zQAfmbQw0TFvjIAQoxIrzLeTAD0l8EfipmbDF4hekAUBBrcndrrbwkAuKMgs8i4UDT2zGEpbunPW2EBetEaNTDiwhDjdJn4aRnPlm+qBX96mHtyMJWwZAi8MK43AD9tmASTU0cdiyUyo0ZJcsiIcgFnp6HKBd6j6VuprHN15WfakQUaXE9CzT3iTnC9arU61eq1EI4RQ/Asb7JhZO8gFAv97CVxFOzA6EFfGDvodpaEeqqwwHMJuXeok3gsiggkTKqJkveBugY3JZQ9j982DJN3TQBy8FJvy0gDo3fz3+ZA67lxhs0GS/ox9EEIvORb7XmvzFOJTYDVJIFisRQgRMERIUw/zFwKFNhuYVbE9qNLL8C7AUB8rclBWWH3fjnmD8Dhs3a8XZtri8lWa6tkghNhZbmdSmxuMCtE0u+6gDHuofzgGFtwbCsucy84D+9FtA3AxhMjj4hiwdxzlZjfsE2GtK80wTkikyQGlx0TZLcVtg+DdU5GUjcQ01Z9ur46/7iu78mPdnuIgNcM3gYgT+68nZamYeFIsNbm9hRhoFhgYycbvQFQaYUlqV+y0LPlvt5gLQP5sX716mO5/MhJAeqKxeHjywtr3Yw9Del1SehDIn1cj/gsZJTaM55rSRViRW6ic1iryeLDVrI/hiP37Mcjhw9kFaUf8zuqJb991gmVsxLoKuDvj78BigA/XCd+E0IX0ihJu7pJiwrWK2UzslAIHVLTTgThkLVoK2dm5+UAAr3jDYScy2Ib5cy7+OFkw6gjYFeBeweObl6rPWDfh4K11gvOZCZkMOxEObmSVLMsx+xjhBQoO5bniAT10N/aWP0Ja1cuElHs61dmjXB6oJg3FqvAHQUEoct/0vrWvw4pXFc0epWXLt7QNZPlf9BrXxTqb2FUXZmNomOJc4eKaBWogqa+aYfyiT7G8w3k10RNF9oTTgYA+BTQ0L4pLwloVUb2YAzYjDeHqrI7TBzlcnBp5kvqO77yRePQ2IPGJRZSqfxXzSh7uP8q40cUylCD++exAo6DZdriJQU50mQPoapJlUvSdDy1K5q0KYZ2rYPk5uLc18HSl9g3yFiG7SzBKdNTffpFMvLHxXfdHxsRjnOpY7X2lDU5dk9wAkJrgqRa5eHhIXDOGIc0QQyPIubstUXurkgKb8nc/iyC9tHLMtcTutVQszJY/n4y6cYT6cF3tocy1Zp6JcyX9k2xEc1k135XLJUwK8bQVM0GbVTIS3NfUe99lxe3Dt95uxVz2MY9381daM5Pndj2OG683H8hamyyj9FFUjuuJ/LUdLEjaPW9DY/aqij3ObpWJErqgyVSacWiNOIUMYpRvfCROCbbhXuvh94Wp9VjJt9JWTmNtKP3gd234l0A/ysAvwNIZCrhIcAx0AAAAABJRU5ErkJggg==" width="22" height="22" alt="Logo" style="border-radius: 4px; object-fit: contain;">
             FiveM Cache Manager
           </span>
-          <button type="button" class="fcm-settings-close" id="fcm-sidebar-close" title="Close">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <button type="button" class="fcm-settings-close" id="fcm-sidebar-close" title="Close Sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         <div class="fcm-sidebar-body">
           <section>
-            <div class="fcm-section-title" style="font-size:12px;margin-bottom:12px;">Favorite Servers</div>
+            <div class="fcm-section-title" style="font-size:11px;font-weight:700;color:var(--fcm-text-muted);letter-spacing:0.05em;margin-bottom:12px;">FAVORITE SERVERS</div>
             <ul class="fcm-fav-list" id="fcm-fav-list">
               <li class="fcm-folder-empty">Loading...</li>
             </ul>
@@ -1176,12 +1179,14 @@
       
       const btnJoin = document.createElement('button');
       btnJoin.className = 'fcm-fav-btn fcm-fav-btn-join';
-      btnJoin.textContent = '▶ Join';
+      btnJoin.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-right:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Join';
+      btnJoin.title = `Join ${fav.name}`;
       btnJoin.onclick = () => joinFavorite(fav.name, fav.join_url);
       
       const btnRemove = document.createElement('button');
       btnRemove.className = 'fcm-fav-btn fcm-fav-btn-remove';
-      btnRemove.textContent = '❌';
+      btnRemove.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      btnRemove.title = 'Remove';
       btnRemove.onclick = () => removeFavorite(fav.join_url);
       
       actionsDiv.appendChild(btnJoin);
