@@ -13,6 +13,13 @@ pub struct SwapResult {
     pub message: String,
 }
 
+#[derive(serde::Serialize)]
+pub struct CheckResult {
+    pub exists: bool,
+    #[serde(rename = "matched_folder")]
+    pub matched_folder: Option<String>,
+}
+
 /// Helper function to safely move directories.
 /// Handles existing destination directories by deleting them first,
 /// creates parents, and returns user-friendly error messages on failure (e.g. Permission Denied).
@@ -94,6 +101,17 @@ pub fn getserverfolders(app: AppHandle) -> Result<Vec<String>, String> {
     // Sort folders alphabetically
     folders.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
     Ok(folders)
+}
+
+/// Check if a cache folder exists for the given server name.
+#[tauri::command]
+pub fn checkcache(app: AppHandle, server_name: String) -> Result<CheckResult, String> {
+    let folders = getserverfolders(app)?;
+    let matched = fuzzy_match(&server_name, &folders);
+    Ok(CheckResult {
+        exists: matched.is_some(),
+        matched_folder: matched,
+    })
 }
 
 /// Swap FiveM server caches based on the server name.

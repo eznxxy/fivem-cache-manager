@@ -8,5 +8,6 @@ commands.allow = [
   "getserverfolders",
   "serverselected",
   "openserver",
-  "check_prerequisites"
+  "check_prerequisites",
+  "checkcache"
 ]

@@ -40,6 +40,7 @@
     serverName: null,
     joinUrl: null,
     matchedFolder: null,
+    swapCancelled: false,
   };
 
   // ── Tauri IPC ──
@@ -640,6 +641,24 @@
       </div>
     `;
     
+    // Inject swap modal HTML
+    const swapModalHtml = `
+      <div id="fcm-swap-modal-overlay" class="fcm-modal-overlay">
+        <div class="fcm-modal" style="text-align: center; padding-top: 20px;">
+          <div class="fcm-modal-header" style="justify-content: center; color: #e8eaf0; font-size: 18px;">
+            Swapping Cache
+          </div>
+          <div class="fcm-modal-body" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <div class="fcm-spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
+            <span>Please wait, moving files...</span>
+          </div>
+          <div class="fcm-modal-footer" style="justify-content: center;">
+            <button class="fcm-btn" id="fcm-swap-btn-cancel" style="background: #1f2435; color: #e8eaf0;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
     // Inject Sidebar HTML
     const sidebarHtml = `
       <div id="fcm-sidebar-overlay"></div>
@@ -666,6 +685,7 @@
 
     document.body.appendChild(bar);
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.insertAdjacentHTML('beforeend', swapModalHtml);
     document.body.insertAdjacentHTML('beforeend', sidebarHtml);
 
     dom = {
@@ -683,6 +703,8 @@
       modalOverlay: document.getElementById('fcm-modal-overlay'),
       modalBtnCancel: document.getElementById('fcm-modal-btn-cancel'),
       modalBtnContinue: document.getElementById('fcm-modal-btn-continue'),
+      swapModalOverlay: document.getElementById('fcm-swap-modal-overlay'),
+      swapBtnCancel: document.getElementById('fcm-swap-btn-cancel'),
     };
 
     dom.btnSwapJoin.addEventListener('click', () => checkPrerequisitesBeforeJoin(handleSwapJoin));
@@ -690,6 +712,15 @@
     dom.btnFavorite.addEventListener('click', toggleFavorite);
     dom.btnSettings.addEventListener('click', toggleSettings);
     dom.btnHome.addEventListener('click', toggleSidebar);
+
+    dom.swapBtnCancel?.addEventListener('click', () => {
+      const confirmed = window.confirm("Are you sure want to cancel this proces this might effect your cache file to be loss or corrupt");
+      if (confirmed) {
+        state.swapCancelled = true;
+        dom.swapModalOverlay?.classList.remove('fcm-visible');
+        setBarStatus('error', { sub: 'Swap cancelled by user', isError: true });
+      }
+    });
 
     setBarStatus('idle');
     injectSettingsPanel();
@@ -831,7 +862,7 @@
     return null;
   }
 
-  function onServerSelected(serverName, joinUrl) {
+  async function onServerSelected(serverName, joinUrl) {
     ensureBar();
     state.serverName = (serverName?.trim() || 'Unknown Server');
     state.joinUrl = joinUrl?.trim() || null;
@@ -842,12 +873,36 @@
       : 'URL not available';
 
     setBarStatus('detected', {
-      label: `Detected: ${state.serverName}`,
+      label: `Detected: ${state.serverName} (Checking cache...)`,
       sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL not found',
       isError: !state.joinUrl,
     });
 
     console.log('[CacheManager] Server detected:', state.serverName, '→', state.joinUrl);
+
+    try {
+      const check = await tauriInvoke('checkcache', { serverName: state.serverName });
+      if (check && check.exists) {
+        setBarStatus('detected', {
+          label: `Detected: ${state.serverName} (Cache Available: ${check.matched_folder})`,
+          sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL not found',
+          isError: !state.joinUrl,
+        });
+      } else {
+        setBarStatus('detected', {
+          label: `Detected: ${state.serverName} (Cache NOT Available)`,
+          sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL not found',
+          isError: !state.joinUrl,
+        });
+      }
+    } catch (e) {
+      console.warn('[CacheManager] checkcache failed:', e);
+      setBarStatus('detected', {
+        label: `Detected: ${state.serverName} (Cache Check Failed: ${String(e).substring(0, 30)})`,
+        sub: state.joinUrl ? `Connect: ${displayUrl}` : 'Join URL not found',
+        isError: !state.joinUrl,
+      });
+    }
   }
 
   function resetBar() {
@@ -1268,16 +1323,29 @@
     if (!state.joinUrl || !state.serverName) return;
 
     setBarStatus('swapping');
-    const spinner = document.createElement('span');
-    spinner.className = 'fcm-spinner';
-    dom.btnSwapJoin.prepend(spinner);
+    state.swapCancelled = false;
+    dom.swapModalOverlay?.classList.add('fcm-visible');
 
     try {
       const result = await tauriInvoke('swapcache', { serverName: state.serverName });
-      spinner.remove();
+      
+      dom.swapModalOverlay?.classList.remove('fcm-visible');
+
+      if (state.swapCancelled) {
+        setBarStatus('error', { sub: 'Swap cancelled by user', isError: true });
+        return;
+      }
 
       if (result?.success) {
         state.matchedFolder = result.matched_folder;
+        
+        // Update local settings state so "Active" badge reflects the new cache
+        if (settingsState && settingsState.config && result.matched_folder) {
+          settingsState.config.last_used_folder = result.matched_folder;
+          // Re-render settings if open
+          refreshFolderList();
+        }
+
         const folderInfo = result.matched_folder
           ? `Matched: ${result.matched_folder}`
           : 'no matching folder found';
@@ -1291,8 +1359,10 @@
 
       if (state.joinUrl) await openUrl(state.joinUrl);
     } catch (e) {
-      spinner.remove();
-      setBarStatus('error', { sub: String(e), isError: true });
+      dom.swapModalOverlay?.classList.remove('fcm-visible');
+      if (!state.swapCancelled) {
+        setBarStatus('error', { sub: String(e), isError: true });
+      }
     }
   }
 

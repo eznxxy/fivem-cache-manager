@@ -44,6 +44,7 @@ pub fn run() {
             commands::server::serverselected,
             commands::server::openserver,
             commands::cache::swapcache,
+            commands::cache::checkcache,
             commands::cache::getserverfolders,
             commands::system::check_prerequisites,
         ])

@@ -47,6 +47,12 @@ pub fn openserver(_app: AppHandle, url: String) -> Result<(), String> {
             .arg(&url)
             .spawn()
             .map_err(|e| format!("Failed to launch explorer: {}", e))?;
+            
+        // Minimize the app automatically after launching FiveM
+        if let Some(win) = _app.get_webview_window("main") {
+            let _ = win.minimize();
+        }
+
         Ok(())
     }
 

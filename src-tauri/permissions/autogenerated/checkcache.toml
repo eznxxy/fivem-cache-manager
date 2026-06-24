@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-checkcache"
+description = "Enables the checkcache command without any pre-configured scope."
+commands.allow = ["checkcache"]
+
+[[permission]]
+identifier = "deny-checkcache"
+description = "Denies the checkcache command without any pre-configured scope."
+commands.deny = ["checkcache"]

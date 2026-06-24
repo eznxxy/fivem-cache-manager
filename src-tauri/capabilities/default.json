@@ -19,6 +19,7 @@
     "allow-saveconfig",
     "allow-getserverfolders",
     "allow-serverselected",
+    "allow-checkcache",
     "core:default",
     "opener:default",
     "shell:allow-open",
