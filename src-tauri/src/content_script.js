@@ -840,6 +840,16 @@
   }
 
   function extractPageServerName() {
+    // ── XPath breadcrumb: (//span)[2] is the clean server name on cfx.re detail pages ──
+    try {
+      const xr = document.evaluate('(//span)[2]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+      const sp = xr.singleNodeValue;
+      if (sp) {
+        const t = sp.textContent?.trim();
+        if (t && !isGenericServerName(t)) return t.split('\n')[0].trim();
+      }
+    } catch (_) {}
+
     const candidates = document.querySelectorAll(
       'h1, h2, h3, h4, h5, .title, .name, [class*="title"], [class*="Title"], [class*="serverName"], [class*="server-name"], [class*="server_name"], [class*="name"], [class*="Name"], [class*="header"], [class*="Header"], strong, b, [class="o8\\+wG60S rTNUUpIs"]'
     );
