@@ -686,6 +686,59 @@
     document.body.appendChild(bar);
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     document.body.insertAdjacentHTML('beforeend', swapModalHtml);
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="fcm-name-prompt-overlay" class="fcm-modal-overlay" style="z-index:2147483648;">
+        <div class="fcm-modal" style="width:380px;">
+
+          <!-- Step 1: Name input -->
+          <div id="fcm-imp-step-name">
+            <div class="fcm-modal-header" style="color:#e8eaf0;font-size:14px;gap:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+              Import Cache
+            </div>
+            <div class="fcm-modal-body" style="padding-top:4px;">
+              <p id="fcm-imp-source-label" style="font-size:11px;color:#8b91a8;margin-bottom:10px;word-break:break-all;"></p>
+              <label style="font-size:11px;color:#8b91a8;display:block;margin-bottom:6px;">Server name (used as the folder name):</label>
+              <input id="fcm-name-prompt-input" type="text"
+                style="width:100%;background:#0d0f14;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:13px;outline:none;box-sizing:border-box;transition:border-color 150ms ease;"
+                placeholder="e.g. My RP Server" autocomplete="off" spellcheck="false" />
+              <p id="fcm-name-prompt-err" style="font-size:10px;color:#f45b5b;min-height:14px;margin-top:5px;"></p>
+            </div>
+            <div class="fcm-modal-footer">
+              <button class="fcm-btn" id="fcm-name-prompt-cancel">Cancel</button>
+              <button class="fcm-btn" id="fcm-name-prompt-ok"
+                style="background:#5d7bf5;color:#fff;border-color:#5d7bf5;padding:8px 20px;">Import</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Loading -->
+          <div id="fcm-imp-step-loading" style="display:none;">
+            <div class="fcm-modal-header" style="color:#e8eaf0;font-size:14px;padding-left:20px;">
+              Importing Cache…
+            </div>
+            <div class="fcm-modal-body" style="display:flex;flex-direction:column;align-items:center;gap:18px;padding:20px;">
+              <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:9999px;overflow:hidden;">
+                <div id="fcm-imp-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#5d7bf5,#7b96ff);border-radius:9999px;transition:width 0.4s ease;"></div>
+              </div>
+              <p id="fcm-imp-loading-msg" style="font-size:12px;color:#8b91a8;text-align:center;">Copying files, please wait…</p>
+            </div>
+          </div>
+
+          <!-- Step 3: Result -->
+          <div id="fcm-imp-step-result" style="display:none;">
+            <div id="fcm-imp-result-header" class="fcm-modal-header" style="font-size:14px;"></div>
+            <div class="fcm-modal-body">
+              <p id="fcm-imp-result-msg" style="font-size:12px;color:#8b91a8;line-height:1.6;"></p>
+            </div>
+            <div class="fcm-modal-footer" style="justify-content:flex-end;">
+              <button class="fcm-btn" id="fcm-imp-result-close"
+                style="background:#5d7bf5;color:#fff;border-color:#5d7bf5;padding:8px 24px;">Done</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `);
     document.body.insertAdjacentHTML('beforeend', sidebarHtml);
 
     dom = {
@@ -935,6 +988,11 @@
 
   let settingsDom = {};
 
+
+  // ── Import Cache Helpers ──
+
+
+
   function injectSettingsPanel() {
     if (document.getElementById('fcm-settings')) return;
 
@@ -1000,6 +1058,19 @@
           <ul class="fcm-folder-list" id="fcm-folder-list" style="margin-top:8px">
             <li class="fcm-folder-empty">Loading...</li>
           </ul>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button type="button" class="fcm-btn" id="fcm-import-folder"
+              style="flex:1;font-size:11px;padding:7px 10px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#8b91a8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background 120ms ease,color 120ms ease,border-color 120ms ease;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+              Import Folder
+            </button>
+            <button type="button" class="fcm-btn" id="fcm-import-zip"
+              style="flex:1;font-size:11px;padding:7px 10px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#8b91a8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background 120ms ease,color 120ms ease,border-color 120ms ease;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+              Import ZIP/RAR
+            </button>
+          </div>
+          <div id="fcm-import-status" style="display:none;margin-top:8px;font-size:11px;padding:6px 10px;border-radius:6px;font-weight:500;"></div>
         </section>
 
       </div>
@@ -1026,6 +1097,9 @@
       refreshBtn: panel.querySelector('#fcm-refresh-folders'),
       saveBtn: panel.querySelector('#fcm-save-settings'),
       saveStatus: panel.querySelector('#fcm-save-status'),
+      importFolderBtn: panel.querySelector('#fcm-import-folder'),
+      importZipBtn: panel.querySelector('#fcm-import-zip'),
+      importStatus: panel.querySelector('#fcm-import-status'),
     };
 
     settingsDom.closeBtn.addEventListener('click', closeSettings);
@@ -1035,6 +1109,14 @@
     settingsDom.toggleAuto.addEventListener('change', onToggleChange);
     settingsDom.toggleRestore.addEventListener('change', onToggleChange);
     settingsDom.pathInput.addEventListener('input', validatePath);
+    settingsDom.importFolderBtn.addEventListener('click', importFromFolder);
+    settingsDom.importZipBtn.addEventListener('click', importFromZip);
+
+    // Hover styles for import buttons
+    [settingsDom.importFolderBtn, settingsDom.importZipBtn].forEach(btn => {
+      btn.addEventListener('mouseenter', () => { if (!btn.disabled) { btn.style.background = '#1f2435'; btn.style.color = '#e8eaf0'; btn.style.borderColor = 'rgba(255,255,255,0.2)'; } });
+      btn.addEventListener('mouseleave', () => { if (!btn.disabled) { btn.style.background = 'transparent'; btn.style.color = '#8b91a8'; btn.style.borderColor = 'rgba(255,255,255,0.12)'; } });
+    });
 
     loadConfig();
   }
@@ -1178,6 +1260,178 @@
     } finally {
       settingsDom.refreshBtn && (settingsDom.refreshBtn.disabled = false);
     }
+  }
+
+  // ── Import Cache Flow Modal ──
+
+  /**
+   * runImportFlow(opts)
+   * Drives the 3-step import modal: Name → Loading → Result.
+   * @param {object} opts
+   *   sourcePath  {string}           - picked folder/zip path
+   *   defaultName {string}           - pre-filled server name
+   *   invokeCmd   {string}           - Tauri command name
+   *   buildArgs   {function(name)}   - builds the invoke args object
+   */
+  async function runImportFlow({ sourcePath, defaultName, invokeCmd, buildArgs }) {
+    const overlay   = document.getElementById('fcm-name-prompt-overlay');
+    const stepName  = document.getElementById('fcm-imp-step-name');
+    const stepLoad  = document.getElementById('fcm-imp-step-loading');
+    const stepRes   = document.getElementById('fcm-imp-step-result');
+    const input     = document.getElementById('fcm-name-prompt-input');
+    const errEl     = document.getElementById('fcm-name-prompt-err');
+    const btnOk     = document.getElementById('fcm-name-prompt-ok');
+    const btnCancel = document.getElementById('fcm-name-prompt-cancel');
+    const srcLabel  = document.getElementById('fcm-imp-source-label');
+    const progBar   = document.getElementById('fcm-imp-progress-bar');
+    const loadMsg   = document.getElementById('fcm-imp-loading-msg');
+    const resHeader = document.getElementById('fcm-imp-result-header');
+    const resMsg    = document.getElementById('fcm-imp-result-msg');
+    const btnClose  = document.getElementById('fcm-imp-result-close');
+
+    if (!overlay) return;
+
+    // ── Step 1: Name input ──
+    const shortSource = sourcePath.replace(/\\/g, '/').split('/').slice(-2).join('/');
+    if (srcLabel) srcLabel.textContent = `Source: …/${shortSource}`;
+    if (input)  input.value = defaultName || '';
+    if (errEl)  errEl.textContent = '';
+    stepName.style.display  = '';
+    stepLoad.style.display  = 'none';
+    stepRes.style.display   = 'none';
+    overlay.classList.add('fcm-visible');
+    setTimeout(() => input?.focus(), 60);
+
+    const serverName = await new Promise((resolve) => {
+      function removeListeners() {
+        btnOk?.removeEventListener('click', onOk);
+        btnCancel?.removeEventListener('click', onCancel);
+        input?.removeEventListener('keydown', onKey);
+      }
+      function onOk() {
+        const val = input?.value?.trim() || '';
+        if (!val) {
+          if (errEl) errEl.textContent = 'Name cannot be empty.';
+          input?.focus();
+          return;
+        }
+        removeListeners();
+        resolve(val);
+      }
+      function onCancel() { removeListeners(); resolve(null); }
+      function onKey(e) {
+        if (e.key === 'Enter')  onOk();
+        if (e.key === 'Escape') onCancel();
+      }
+      btnOk?.addEventListener('click', onOk);
+      btnCancel?.addEventListener('click', onCancel);
+      input?.addEventListener('keydown', onKey);
+    });
+
+    if (!serverName) {
+      // User cancelled — close modal
+      overlay.classList.remove('fcm-visible');
+      return;
+    }
+
+    // ── Step 2: Loading ──
+    stepName.style.display = 'none';
+    stepLoad.style.display = '';
+    if (progBar) progBar.style.width = '0%';
+    if (loadMsg) loadMsg.textContent = 'Starting import…';
+
+    // Animate the progress bar so the user sees it moving
+    let pct = 0;
+    const progInterval = setInterval(() => {
+      // Ease toward 85% while we wait for the backend
+      pct = Math.min(pct + (85 - pct) * 0.07, 84);
+      if (progBar) progBar.style.width = `${pct.toFixed(1)}%`;
+    }, 120);
+
+    let result = null;
+    try {
+      if (loadMsg) loadMsg.textContent = 'Copying files, please wait…';
+      result = await tauriInvoke(invokeCmd, buildArgs(serverName));
+    } catch (e) {
+      result = { success: false, message: String(e) };
+    } finally {
+      clearInterval(progInterval);
+    }
+
+    // Fill progress bar to 100%
+    if (progBar) progBar.style.width = '100%';
+    await new Promise(r => setTimeout(r, 300));
+
+    // ── Step 3: Result ──
+    stepLoad.style.display = 'none';
+    stepRes.style.display  = '';
+
+    if (result?.success) {
+      resHeader.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span style="color:#3ecf8e;">Import Successful</span>`;
+      resMsg.textContent = result.message || 'Cache imported successfully.';
+      resMsg.style.color = '#8b91a8';
+      // Refresh folder list in background
+      refreshFolderList();
+    } else {
+      resHeader.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f45b5b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span style="color:#f45b5b;">Import Failed</span>`;
+      resMsg.textContent = result?.message || 'An unknown error occurred.';
+      resMsg.style.color = '#f45b5b';
+    }
+
+    await new Promise((resolve) => {
+      function onClose() {
+        btnClose?.removeEventListener('click', onClose);
+        resolve();
+      }
+      btnClose?.addEventListener('click', onClose);
+    });
+    overlay.classList.remove('fcm-visible');
+  }
+
+  async function importFromFolder() {
+    const openDialog = window.__TAURI__?.dialog?.open;
+    if (!openDialog) { showImportStatus('Dialog not available.', true); return; }
+
+    let sourcePath;
+    try { sourcePath = await openDialog({ directory: true, title: 'Select cache folder to import' }); }
+    catch (e) { showImportStatus(`Dialog error: ${e}`, true); return; }
+    if (!sourcePath) return;
+
+    const defaultName = sourcePath.replace(/\\/g, '/').split('/').filter(Boolean).pop() || '';
+    await runImportFlow({
+      sourcePath,
+      defaultName,
+      invokeCmd: 'importcache',
+      buildArgs: (serverName) => ({ sourcePath, serverName }),
+    });
+  }
+
+  async function importFromZip() {
+    const openDialog = window.__TAURI__?.dialog?.open;
+    if (!openDialog) { showImportStatus('Dialog not available.', true); return; }
+
+    let zipPath;
+    try {
+      zipPath = await openDialog({
+        directory: false, multiple: false,
+        title: 'Select ZIP or RAR archive to import',
+        filters: [{ name: 'Archives', extensions: ['zip', 'rar'] }],
+      });
+    } catch (e) { showImportStatus(`Dialog error: ${e}`, true); return; }
+    if (!zipPath) return;
+
+    const basename = zipPath.replace(/\\/g, '/').split('/').pop() || '';
+    const defaultName = basename.replace(/\.(zip|rar)$/i, '');
+    await runImportFlow({
+      sourcePath: zipPath,
+      defaultName,
+      invokeCmd: 'importcachearchive',
+      buildArgs: (serverName) => ({ archivePath: zipPath, serverName }),
+    });
   }
 
   // ── Home Sidebar Logic ──

@@ -46,6 +46,8 @@ pub fn run() {
             commands::cache::swapcache,
             commands::cache::checkcache,
             commands::cache::getserverfolders,
+            commands::cache::importcache,
+            commands::cache::importcachearchive,
             commands::system::check_prerequisites,
         ])
         .setup(|app| {
